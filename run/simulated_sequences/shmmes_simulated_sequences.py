@@ -388,6 +388,7 @@ if __name__ == "__main__":
 
 
     write_pickle(hmm_final_param,os.path.join(result_folder,'hmm_final_parameter.pkl'))
+    write_pickle(shmm_final_param,os.path.join(result_folder,'shmm_final_parameter.pkl'))
     write_pickle(hmmes_final_param,os.path.join(result_folder,'hmmes_final_parameter.pkl'))
     write_pickle(shmmes_final_param,os.path.join(result_folder,'shmmes_final_parameter.pkl'))
 

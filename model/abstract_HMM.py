@@ -559,13 +559,6 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
             )
             mse = tf.math.reduce_mean((tf.math.squared_difference(y[-eval_size:], y_pred)))
             mse_result.append(mse)
-        
-#         mse_result = []
-#         for i in range(10):
-#             viterbi_x = self.viterbi(y, w, y_past)
-#             y_pred = self.simulate_y(x=viterbi_x, w=w, y_init=y_past[0], start_t=0)
-#             mse = tf.math.reduce_mean((tf.math.squared_difference(y, y_pred)))
-#             mse_result.append(mse)
 
         return np.mean(mse_result)
 

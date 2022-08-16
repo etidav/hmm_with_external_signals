@@ -134,20 +134,20 @@ if __name__ == "__main__":
         os.makedirs(current_execution_model_folder)
         
         if init_with_true_parameter:
-            hmmes_param = list(model.get_param())
+            shmm_param = list(model.get_param())
             init_param = list(original_model.get_param())
             init_param[1] = init_param[1] + np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(init_param[1].flatten()))).reshape(init_param[1].shape)
             init_param[2] = init_param[2] + np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(init_param[2].flatten()))).reshape(init_param[2].shape)
             init_param[2][init_param[2]<0] = 0.1
             init_param[3] = init_param[3] + np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(init_param[3].flatten()))).reshape(init_param[3].shape)
 
-            hmmes_param[0] = init_param[0]
-            hmmes_param[1][:,0] = init_param[1].flatten()
-            hmmes_param[1][:,1:] = np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(hmmes_param[1][:,1:].flatten()))).reshape(hmmes_param[1][:,1:].shape)
-            hmmes_param[2] = init_param[2]
-            hmmes_param[3][:,0] = init_param[3].flatten()
-            hmmes_param[3][:,1:] = np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(hmmes_param[3][:,1:].flatten()))).reshape(hmmes_param[3][:,1:].shape)   
-            model.assign_param(*hmmes_param)
+            shmm_param[0] = init_param[0]
+            shmm_param[1][:,0] = init_param[1].flatten()
+            shmm_param[1][:,1:] = np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(shmm_param[1][:,1:].flatten()))).reshape(shmm_param[1][:,1:].shape)
+            shmm_param[2] = init_param[2]
+            shmm_param[3][:,:,:1] = init_param[3]
+            shmm_param[3][:,:,1:] = np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(shmm_param[3][:,:,1:].flatten()))).reshape(shmm_param[3][:,:,1:].shape)   
+            model.assign_param(*shmm_param)
             init_param = False
         else:
             init_param = True
@@ -187,8 +187,8 @@ if __name__ == "__main__":
             hmmes_param[1][:,0] = init_param[1].flatten()
             hmmes_param[1][:,1:] = np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(hmmes_param[1][:,1:].flatten()))).reshape(hmmes_param[1][:,1:].shape)
             hmmes_param[2] = init_param[2]
-            hmmes_param[3][:,0] = init_param[3].flatten()
-            hmmes_param[3][:,1:] = np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(hmmes_param[3][:,1:].flatten()))).reshape(hmmes_param[3][:,1:].shape)   
+            hmmes_param[3][:,:,:1] = init_param[3]
+            hmmes_param[3][:,:,1:] = np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(hmmes_param[3][:,:,1:].flatten()))).reshape(hmmes_param[3][:,:,1:].shape)   
             model.assign_param(*hmmes_param)
             init_param = False
         else:
@@ -218,19 +218,19 @@ if __name__ == "__main__":
         os.makedirs(current_execution_model_folder)
         
         if init_with_true_parameter:
-            hmmes_param = list(model.get_param())
+            shmmes_param = list(model.get_param())
             init_param = list(original_model.get_param())
             init_param[1] = init_param[1] + np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(init_param[1].flatten()))).reshape(init_param[1].shape)
             init_param[2] = init_param[2] + np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(init_param[2].flatten()))).reshape(init_param[2].shape)
             init_param[2][init_param[2]<0] = 0.1
             init_param[3] = init_param[3] + np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(init_param[3].flatten()))).reshape(init_param[3].shape)
-            hmmes_param[0] = init_param[0]
-            hmmes_param[1][:,0] = init_param[1].flatten()
-            hmmes_param[1][:,1:] = np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(hmmes_param[1][:,1:].flatten()))).reshape(hmmes_param[1][:,1:].shape)
-            hmmes_param[2] = init_param[2]
-            hmmes_param[3][:,0] = init_param[3].flatten()
-            hmmes_param[3][:,1:] = np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(hmmes_param[3][:,1:].flatten()))).reshape(hmmes_param[3][:,1:].shape)   
-            model.assign_param(*hmmes_param)
+            shmmes_param[0] = init_param[0]
+            shmmes_param[1][:,0] = init_param[1].flatten()
+            shmmes_param[1][:,1:] = np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(shmmes_param[1][:,1:].flatten()))).reshape(shmmes_param[1][:,1:].shape)
+            shmmes_param[2] = init_param[2]
+            shmmes_param[3][:,:,:1] = init_param[3]
+            shmmes_param[3][:,:,1:] = np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(shmmes_param[3][:,:,1:].flatten()))).reshape(shmmes_param[3][:,:,1:].shape) 
+            model.assign_param(*shmmes_param)
             init_param = False
         else:
             init_param = True

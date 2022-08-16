@@ -110,7 +110,7 @@ if __name__ == "__main__":
             hmm_param[0] = init_param[0]
             hmm_param[1] = init_param[1][:,0].reshape((-1,1))
             hmm_param[2] = init_param[2]
-            hmm_param[3] = init_param[3][:,0].reshape((-1,1))
+            hmm_param[3] = init_param[3][:,:,:1]
             model.assign_param(*hmm_param)
             init_param = False
         else:
@@ -141,19 +141,19 @@ if __name__ == "__main__":
         os.makedirs(current_execution_model_folder)
         
         if init_with_true_parameter:
-            hmm_param = list(model.get_param())
+            shmm_param = list(model.get_param())
             init_param = list(original_model.get_param())
             init_param[1] = init_param[1] + np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(init_param[1].flatten()))).reshape(init_param[1].shape)
             init_param[2] = init_param[2] + np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(init_param[2].flatten()))).reshape(init_param[2].shape)
             init_param[2][init_param[2]<0] = 0.1
             init_param[3] = init_param[3] + np.random.normal(0,percentage_of_variation)*np.power(-1,np.random.randint(0,2,len(init_param[3].flatten()))).reshape(init_param[3].shape)
-            hmm_param[0] = init_param[0]
-            hmm_param[1][:,0] = init_param[1][:,0]
-            hmm_param[1][:,1:] = init_param[1][:,2:]
-            hmm_param[2] = init_param[2]
-            hmm_param[3][:,0] = init_param[3][:,0]
-            hmm_param[3][:,1:] = init_param[3][:,2:]
-            model.assign_param(*hmm_param)
+            shmm_param[0] = init_param[0]
+            shmm_param[1][:,0] = init_param[1][:,0]
+            shmm_param[1][:,1:] = init_param[1][:,2:]
+            shmm_param[2] = init_param[2]
+            shmm_param[3][:,:,0] = init_param[3][:,:,0]
+            shmm_param[3][:,:,1:] = init_param[3][:,:,2:]
+            model.assign_param(*shmm_param)
             init_param = False
         else:
             init_param = True
@@ -192,7 +192,7 @@ if __name__ == "__main__":
             hmmes_param[0] = init_param[0]
             hmmes_param[1] = init_param[1][:,:2]
             hmmes_param[2] = init_param[2]
-            hmmes_param[3] = init_param[3][:,:2]
+            hmmes_param[3] = init_param[3][:,:,:2]
             model.assign_param(*hmmes_param)
             init_param = False
         else:
@@ -388,6 +388,7 @@ if __name__ == "__main__":
 
 
     write_pickle(hmm_final_param,os.path.join(result_folder,'hmm_final_parameter.pkl'))
+    write_pickle(shmm_final_param,os.path.join(result_folder,'shmm_final_parameter.pkl'))
     write_pickle(hmmes_final_param,os.path.join(result_folder,'hmmes_final_parameter.pkl'))
     write_pickle(shmmes_final_param,os.path.join(result_folder,'shmmes_final_parameter.pkl'))
 

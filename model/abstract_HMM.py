@@ -27,6 +27,7 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         self.K = nb_hidden_states
         self.past_dependency = past_dependency
         self.season = season
+        self.auto_regressive = False
         self.define_param()
         self.init_param()
 
@@ -97,7 +98,7 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         pass
 
     @abstractmethod
-    def tp(self, t: tf.Tensor, w: tf.Tensor, y_past: tf.Tensor) -> tf.Tensor:
+    def tp(self, t: tf.Tensor, w: tf.Tensor) -> tf.Tensor:
         """
         Compute the transition matrix
         
@@ -108,9 +109,6 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         
         - *w*: tf.Tensor(nb_time_step, past_dependency) containing the values of the external signal in Hidden Markov Models with 
             external variable.
-            
-        - *y_past*: tf.Tensor(nb_time_step, past_dependency) containing the past values of the main signal Y_{t-m} in AutoRegressive 
-            Hidden Markov Models.
          
         Returns:
         
@@ -125,7 +123,9 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         pi = np.random.uniform(-1, 1, self.K - 1)
         delta = np.random.uniform(-1, 1, self.K * self.delta_var.shape[1])
         sigma = np.random.uniform(-1, 1, self.K)
-        omega = np.random.uniform(-1, 1, self.K * (self.K-1) * self.omega_var.shape[2])
+        omega = np.random.uniform(
+            -1, 1, self.K * (self.K - 1) * self.omega_var.shape[2]
+        )
         self.pi_var.assign(pi)
         self.delta_var.assign(tf.reshape(delta, [self.K, self.delta_var.shape[1]]))
         self.sigma_var.assign(sigma)
@@ -147,21 +147,13 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         
         - *omega*: np.ndarray containing the transition matrix values
         """
-        if type(pi) == list:
-            pi = np.array(pi)
-        if type(delta) == list:
-            delta = np.array(delta)
-        if type(sigma) == list:
-            sigma = np.array(sigma)
-        if type(omega) == list:
-            omega = np.array(omega)
 
         self.pi_var.assign(tf.math.log(pi[:-1] / (1 - pi[:-1])))
-        self.delta_var.assign(np.array(delta))
-        self.sigma_var.assign(np.array(tf.math.log(sigma)))
-        self.omega_var.assign(np.array(omega))
+        self.delta_var.assign(delta)
+        self.sigma_var.assign(tf.math.log(sigma))
+        self.omega_var.assign(omega)
 
-    def get_param(self) -> Tuple:
+    def get_param(self, return_numpy=True) -> Tuple:
         """
         get the HMM model parameters
         
@@ -169,12 +161,20 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         
         - *param*: a Tuple containing the HMM model parameters
         """
-        return (
-            self.pi().numpy(),
-            self.delta_var.numpy(),
-            self.sigma().numpy(),
-            self.omega_var.numpy(),
-        )
+        if return_numpy:
+            return (
+                self.pi().numpy(),
+                self.delta_var.numpy(),
+                self.sigma().numpy(),
+                self.omega_var.numpy(),
+            )
+        else:
+            return (
+                self.pi(),
+                self.delta_var,
+                self.sigma(),
+                self.omega_var,
+            )
 
     def emission(
         self, k: int, t: tf.Tensor, w: tf.Tensor, y_past: tf.Tensor
@@ -200,8 +200,16 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         - *realisation_value*: a tf.Tensor(nb_time_step,) containing a realisation of one of the emission densities
         """
         return np.random.normal(
-            loc=self.mu(t, tf.cast(w, tf.float64), tf.cast(y_past, tf.float64))[k],
-            scale=self.sigma(t, tf.cast(w, tf.float64), tf.cast(y_past, tf.float64))[k],
+            loc=self.mu(
+                tf.cast(t, dtype=tf.float64),
+                tf.cast(w, tf.float64),
+                tf.cast(y_past, tf.float64),
+            )[k],
+            scale=self.sigma(
+                tf.cast(t, dtype=tf.float64),
+                tf.cast(w, tf.float64),
+                tf.cast(y_past, tf.float64),
+            )[k],
         )
 
     def emission_prob(
@@ -288,9 +296,19 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         """
         T = len(y)
         alpha_t = []
-        transition_probs = self.tp(tf.range(T, dtype=tf.float64), w, y_past)
+        transition_probs = self.tp(
+            tf.range(self.past_dependency, self.past_dependency + T, dtype=tf.float64),
+            w,
+        )
         emission_probs = [
-            self.emission_prob(i, y, tf.range(T), w, y_past, apply_log=False)
+            self.emission_prob(
+                i,
+                y,
+                tf.range(self.past_dependency, self.past_dependency + T),
+                w,
+                y_past,
+                apply_log=False,
+            )
             for i in range(self.K)
         ]
         for i in range(self.K):
@@ -335,9 +353,19 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         """
         T = len(y)
         beta_t = []
-        transition_probs = self.tp(tf.range(T, dtype=tf.float64), w, y_past)
+        transition_probs = self.tp(
+            tf.range(self.past_dependency, self.past_dependency + T, dtype=tf.float64),
+            w,
+        )
         emission_probs = [
-            self.emission_prob(i, y, tf.range(T), w, y_past, apply_log=False)
+            self.emission_prob(
+                i,
+                y,
+                tf.range(self.past_dependency, self.past_dependency + T),
+                w,
+                y_past,
+                apply_log=False,
+            )
             for i in range(self.K)
         ]
         for i in range(self.K):
@@ -418,12 +446,24 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         )
         xi = (
             xi
-            * self.tp(tf.range(T - 1, dtype=tf.float64), w[: T - 1], y_past[: T - 1])
+            * self.tp(
+                tf.range(
+                    self.past_dependency, self.past_dependency + T - 1, dtype=tf.float64
+                ),
+                w[: T - 1],
+            )
             * tf.concat(
                 [
                     tf.reshape(
                         self.emission_prob(
-                            i, y[1:], tf.range(1, T), w[1:], y_past[1:], apply_log=False
+                            i,
+                            y[1:],
+                            tf.range(
+                                self.past_dependency + 1, self.past_dependency + T
+                            ),
+                            w[1:],
+                            y_past[1:],
+                            apply_log=False,
                         ),
                         (T - 1, 1, 1),
                     )
@@ -437,13 +477,14 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         )
         return xi
 
+    @tf.function
     def compute_Q(
         self,
         y: tf.Tensor,
-        gamma: tf.Tensor,
-        xi: tf.Tensor,
         w: tf.Tensor,
         y_past: tf.Tensor,
+        previous_param: List = None,
+        new_param: List = None,
     ) -> tf.Tensor:
         """
         Compute the Q quantity of the EM algorithm
@@ -466,6 +507,17 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         
         - *Q*: a tf.Tensor containing the Q quantity
         """
+        if (previous_param is not None) or (new_param is not None):
+            model_param = self.get_param(return_numpy=False)
+
+        if previous_param is not None:
+            self.assign_param(*previous_param)
+        alpha = self.forward_probs(y, w, y_past)
+        beta = self.backward_probs(y, w, y_past)
+        gamma = tf.stop_gradient(self.gamma_probs(alpha, beta))
+        xi = tf.stop_gradient(self.xi_probs(alpha, beta, y, w, y_past))
+        if new_param is not None:
+            self.assign_param(*new_param)
         T = len(y)
         if w is None:
             w = tf.zeros_like(y)
@@ -477,7 +529,14 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
             gamma
             * tf.transpose(
                 [
-                    self.emission_prob(i, y, tf.range(T), w, y_past, apply_log=True)
+                    self.emission_prob(
+                        i,
+                        y,
+                        tf.range(self.past_dependency, self.past_dependency + T),
+                        w,
+                        y_past,
+                        apply_log=True,
+                    )
                     for i in range(self.K)
                 ]
             )
@@ -485,10 +544,20 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         Q_tp = tf.math.reduce_sum(
             xi
             * tf.math.log(
-                self.tp(tf.range(T - 1, dtype=tf.float64), w[: T - 1], y_past[: T - 1])
+                self.tp(
+                    tf.range(
+                        self.past_dependency,
+                        self.past_dependency + T - 1,
+                        dtype=tf.float64,
+                    ),
+                    w[: T - 1],
+                )
             )
         )
         Q = -Q_pi - Q_mu_sigma - Q_tp
+
+        if (previous_param is not None) or (new_param is not None):
+            self.assign_param(*model_param)
 
         return Q
 
@@ -517,18 +586,16 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         """
 
         with tf.GradientTape() as tape:
-            alpha = self.forward_probs(y, w, y_past)
-            beta = self.backward_probs(y, w, y_past)
-            gamma = self.gamma_probs(alpha, beta)
-            xi = self.xi_probs(alpha, beta, y, w, y_past)
-            EM_loss = self.compute_Q(y, gamma, xi, w, y_past)
+            EM_loss = self.compute_Q(y, w, y_past)
             grad = tape.gradient(EM_loss, self.trainable_variables)
 
-        return EM_loss, grad
+        return grad
 
-    def eval_model(self, y: tf.Tensor, w: tf.Tensor, y_past: tf.Tensor, eval_size: int) -> tf.Tensor:
+    def eval_model(
+        self, y: tf.Tensor, w: tf.Tensor, y_past: tf.Tensor, eval_size: int
+    ) -> tf.Tensor:
         """
-        Compute the MSE of the model over the time series y using the Viteri algorithm.
+        Compute the MSE of the model over a eval set.
         
         Arguments:
 
@@ -546,7 +613,7 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         
         - *mse*: the mse loss
         """
-        w_test = np.repeat(w[-eval_size].numpy()[-1],eval_size)
+        w_test = np.repeat(w[-eval_size].numpy()[-1], eval_size - self.past_dependency)
         w_test = np.concatenate([w[-eval_size].numpy(), w_test], axis=0)
         alpha = self.forward_probs(y[:-eval_size], w[:-eval_size], y_past[:-eval_size])
         beta = self.backward_probs(y[:-eval_size], w[:-eval_size], y_past[:-eval_size])
@@ -555,9 +622,15 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         mse_result = []
         for i in range(10):
             x_pred, y_pred, y_pred_past = self.simulate_xy(
-                horizon=eval_size, start_t=len(y[:-eval_size]), x_init=x_init, w=w_test, y_init=y[-self.past_dependency-eval_size:-eval_size]
+                horizon=eval_size,
+                start_t=len(y[:-eval_size]),
+                x_init=x_init,
+                w=w_test,
+                y_init=y[-self.past_dependency - eval_size : -eval_size],
             )
-            mse = tf.math.reduce_mean((tf.math.squared_difference(y[-eval_size:], y_pred)))
+            mse = tf.math.reduce_mean(
+                (tf.math.squared_difference(y[-eval_size:], y_pred))
+            )
             mse_result.append(mse)
 
         return np.mean(mse_result)
@@ -581,9 +654,7 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         - *x*: a tf.Tensor(nb_time_step,) containing the hidden states sequence
         """
         T = len(y)
-        transition_probs = tf.math.log(
-            self.tp(tf.range(T, dtype=tf.float64), w, y_past)
-        )
+        transition_probs = tf.math.log(self.tp(tf.range(T, dtype=tf.float64), w))
         emission_probs = [
             self.emission_prob(i, y, tf.range(T), w, y_past, apply_log=True)
             for i in range(self.K)
@@ -704,8 +775,19 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
                 axis=0,
             )
         if y_init is None:
-            y_init = tf.zeros(1)
+            y_init = tf.zeros(self.past_dependency)
         y_past.append(y_init)
+
+        transition_probs = self.tp(
+            tf.range(start_t, horizon + start_t, dtype=tf.float64), w
+        )
+        if not self.auto_regressive:
+            emission = [
+                self.emission(
+                    i, tf.range(start_t, horizon + start_t, dtype=tf.float64), w, y_past
+                )
+                for i in range(self.K)
+            ]
         for t in range(horizon):
             if t == 0:
                 if x_init is None:
@@ -713,28 +795,22 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
                 else:
                     x.append(x_init)
             else:
-                x.append(
-                    np.random.binomial(
-                        1,
-                        self.tp(
-                            tf.cast([start_t + t - 1], tf.float64),
-                            tf.cast(tf.expand_dims(w[t - 1], axis=0), tf.float64),
-                            tf.cast(tf.expand_dims(y_past[t - 1], axis=0), tf.float64),
-                        )[0, x[t - 1], 1],
+                x.append(np.random.binomial(1, transition_probs[t - 1][x[t - 1], 1],))
+            if self.auto_regressive:
+                y.append(
+                    self.emission(
+                        x[t],
+                        tf.cast([start_t + t], tf.float64),
+                        tf.expand_dims(w[t], axis=0),
+                        tf.expand_dims(y_past[t], axis=0),
                     )
                 )
-            y.append(
-                self.emission(
-                    x[t],
-                    tf.cast([start_t + t], tf.float64),
-                    tf.expand_dims(w[t], axis=0),
-                    tf.expand_dims(y_past[t], axis=0),
-                )
-            )
-            y_past.append(tf.concat([y_past[-1][1:], y[-1]], axis=0))
+                y_past.append(tf.concat([y_past[-1][1:], y[-1]], axis=0))
+            else:
+                y.append(emission[x[t]][t])
 
         x = tf.squeeze(tf.cast(tf.stack(x), tf.int32))
-        y = tf.squeeze(tf.stack(y))
+        y = tf.squeeze(tf.cast(tf.stack(y), tf.float64))
         y_past = tf.stack(y_past)
 
         return x, y, y_past
@@ -743,13 +819,14 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         self,
         y: tf.Tensor,
         nb_em_epoch: int,
+        nb_iteration_per_epoch: int,
         nb_execution: int,
         optimizer_name: str,
         learning_rate: int,
         w: tf.Tensor = None,
         eval_size: int = 52,
         init_param: bool = True,
-        return_param_evolution: bool = False
+        return_param_evolution: bool = False,
     ) -> None:
         """
         Run the Baum and Welch algorithm to fit the HMM model.
@@ -779,7 +856,7 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
             w = tf.stack(
                 [
                     w[i : i + self.past_dependency]
-                    for i in range(w.shape[0] - self.past_dependency)
+                    for i in range(w.shape[0] - self.past_dependency + 1)
                 ],
                 axis=0,
             )
@@ -793,7 +870,7 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
             axis=0,
         )
         y = y[self.past_dependency :]
-        
+
         final_mse = np.inf
         run_mse = np.inf
         best_exec = -1
@@ -812,36 +889,51 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
             exec_param.append(self.get_param())
             wrong_initialisation = 0
             for epoch in range(nb_em_epoch):
-
-                _Q = self.compute_grad(y, w, y_past)[0]
-                EM_loss, grad = self.compute_grad(y, w, y_past)
-                optimizer.apply_gradients(zip(grad, self.trainable_variables))
-                exec_param.append(self.get_param())
-                updated_Q = self.compute_grad(y, w, y_past)[0]
+                _Q = self.compute_Q(y, w, y_past)
+                Q_diff = []
+                updated_param = []
+                for j in tf.range(nb_iteration_per_epoch):
+                    grad = self.compute_grad(y, w, y_past)
+                    optimizer.apply_gradients(zip(grad, self.trainable_variables))
+                    updated_param.append(self.get_param())
+                    Q_diff.append(
+                        self.compute_Q(y, w, y_past, exec_param[-1], updated_param[-1])
+                        - _Q
+                    )
+                Q_diff = Q_diff[np.argmin(Q_diff)]
+                updated_param = updated_param[np.argmin(Q_diff)]
                 print("epoch : ", epoch)
-                Q_diff = tf.math.abs(updated_Q - _Q)
                 print("Q diff : ", Q_diff)
-                if not (Q_diff.numpy() <= 0 or Q_diff.numpy() > 0):
+                if Q_diff > 0:
+                    print(
+                        f"Q_diff > 0 --> optimizer learning rate reduced to {optimizer.lr/2}"
+                    )
+                    self.assign_param(*exec_param[-1])
+                    optimizer.lr = optimizer.lr / 2
+                else:
+                    self.assign_param(*updated_param)
+                exec_param.append(self.get_param())
+
+                if not (np.abs(Q_diff.numpy()) <= 0 or np.abs(Q_diff.numpy()) > 0):
                     wrong_initialisation = 1
                     print("wrong initialisation")
                     break
-                
-                if Q_diff < 10 ** (-10):
+
+                if np.abs(Q_diff) < 10 ** (-10):
                     print("stop of the EM algorithm")
                     break
-            
+
             if not wrong_initialisation:
                 run_mse = self.eval_model(y, w, y_past, eval_size)
                 print(f"run mse : {run_mse}")
                 all_param[i] = exec_param
-                
+
                 if run_mse < final_mse:
                     final_param = self.get_param()
                     final_mse = run_mse
                     best_exec = i
                     print("checkpoint")
-                
-                
+
         if final_param is not None:
             self.assign_param(*final_param)
         else:
@@ -865,7 +957,7 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
 
         - *optimizer*: a tensorflow optimizer.
         """
-        if optimizer_name == "Adam":
+        if optimizer_name.lower() == "adam":
             return tf.keras.optimizers.Adam(learning_rate=learning_rate)
 
     def evaluate(
@@ -910,7 +1002,9 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         """
 
         if w is not None:
-            w_test = np.concatenate([w[-self.past_dependency:], w_test], axis=0)
+            w_test = np.concatenate(
+                [w[-self.past_dependency :], w_test[: -self.past_dependency]], axis=0
+            )
             w = tf.stack(
                 [
                     w[i : i + self.past_dependency]
@@ -927,7 +1021,7 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
             ],
             axis=0,
         )
-        y_init = y[-self.past_dependency:]
+        y_init = y[-self.past_dependency :]
         y = y[self.past_dependency :]
 
         alpha = self.forward_probs(y, w, y_past)

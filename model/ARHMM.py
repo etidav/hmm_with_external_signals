@@ -2,10 +2,28 @@ import numpy as np
 import tensorflow as tf
 from model.abstract_HMM import Hidden_Markov_Model
 
+
 class ARHMM(Hidden_Markov_Model):
     """
     Class defining a autoregressive HMM model.
     """
+
+    def __init__(
+        self, nb_hidden_states: int = 2, past_dependency: int = 1, season: int = 1
+    ) -> None:
+        """
+        Instantiate a ARHMM model with gaussian emission laws and discrete hidden states.
+        
+        Arguments:
+    
+        - *nb_hidden_states*: number of hidden states of the HMM.
+        
+        - *past_dependency*: In case of a ARHMM, define the past dependency length.
+        
+        - *season*: In case of a SHMM, define the seasonality length.
+        """
+        super().__init__(nb_hidden_states, past_dependency, season)
+        self.auto_regressive = True
 
     def define_param(self) -> None:
         """
@@ -13,7 +31,8 @@ class ARHMM(Hidden_Markov_Model):
         """
         self.pi_var = tf.Variable([0.5 for i in range(self.K - 1)], dtype=tf.float64)
         self.delta_var = tf.Variable(
-            [[0.5 for i in range(1+self.past_dependency)] for j in range(self.K)], dtype=tf.float64
+            [[0.5 for i in range(1 + self.past_dependency)] for j in range(self.K)],
+            dtype=tf.float64,
         )
         self.sigma_var = tf.Variable([0.5 for i in range(self.K)], dtype=tf.float64)
         self.omega_var = tf.Variable(
@@ -48,9 +67,7 @@ class ARHMM(Hidden_Markov_Model):
             axis=0,
         )
 
-    def mu(
-        self, t: tf.Tensor, w: tf.Tensor, y_past: tf.Tensor
-    ) -> tf.Tensor:
+    def mu(self, t: tf.Tensor, w: tf.Tensor, y_past: tf.Tensor) -> tf.Tensor:
         """
         Compute the standard deviation of the emission densities
         
@@ -78,7 +95,7 @@ class ARHMM(Hidden_Markov_Model):
                             tf.expand_dims(
                                 tf.ones(y_past.shape[0], dtype=tf.float64), axis=1
                             ),
-                            y_past
+                            y_past,
                         ],
                         axis=1,
                     ),
@@ -87,8 +104,10 @@ class ARHMM(Hidden_Markov_Model):
                 axis=2,
             )
         )
-    
-    def sigma(self, t: tf.Tensor=None, w: tf.Tensor=None, y_past: tf.Tensor=None) -> tf.Tensor:
+
+    def sigma(
+        self, t: tf.Tensor = None, w: tf.Tensor = None, y_past: tf.Tensor = None
+    ) -> tf.Tensor:
         """
         Compute the mean of the emission densities
 
@@ -109,7 +128,7 @@ class ARHMM(Hidden_Markov_Model):
         """
         return tf.math.exp(self.sigma_var)
 
-    def tp(self, t: tf.Tensor, w: tf.Tensor, y_past: tf.Tensor) -> tf.Tensor:
+    def tp(self, t: tf.Tensor, w: tf.Tensor) -> tf.Tensor:
         """
         Compute the transition matrix
         
@@ -120,9 +139,6 @@ class ARHMM(Hidden_Markov_Model):
         
         - *w*: tf.Tensor(nb_time_step, past_dependency) containing the values of the external signal in Hidden Markov Models with 
             external variable.
-            
-        - *y_past*: tf.Tensor(nb_time_step, past_dependency) containing the past values of the main signal Y_{t-m} in AutoRegressive 
-            Hidden Markov Models.
          
         Returns:
         
@@ -149,7 +165,7 @@ class ARHMM(Hidden_Markov_Model):
                 (t.shape[0], self.K, 1),
             )
         )
-        
+
         return tf.concat(
             [
                 P / tf.expand_dims(1 + tf.math.reduce_sum(P, axis=2), axis=2),
@@ -165,11 +181,35 @@ class ARHMM(Hidden_Markov_Model):
             axis=2,
         )
 
-    
+
 class ARHMM_window(Hidden_Markov_Model):
     """
     Class defining a autoregressive seasonal HMM with external signals.
     """
+
+    def __init__(
+        self,
+        nb_hidden_states: int = 2,
+        past_dependency: int = 1,
+        past_dependency0: int = 1,
+        season: int = 1,
+    ) -> None:
+        """
+        Instantiate a ARHMM model with gaussian emission laws and discrete hidden states.
+        
+        Arguments:
+    
+        - *nb_hidden_states*: number of hidden states of the HMM.
+        
+        - *past_dependency*: In case of a ARHMM, define the past dependency length.
+        
+        - *past_dependency0*: In case of a ARHMM with window, define le length of window of past dependency.
+        
+        - *season*: In case of a SHMM, define the seasonality length.
+        """
+        self.past_dependency0 = past_dependency0
+        super().__init__(nb_hidden_states, past_dependency, season)
+        self.auto_regressive = True
 
     def __init__(
         self,
@@ -203,7 +243,8 @@ class ARHMM_window(Hidden_Markov_Model):
         """
         self.pi_var = tf.Variable([0.5 for i in range(self.K - 1)], dtype=tf.float64)
         self.delta_var = tf.Variable(
-            [[0.5 for i in range(1+self.past_dependency0)] for j in range(self.K)], dtype=tf.float64
+            [[0.5 for i in range(1 + self.past_dependency0)] for j in range(self.K)],
+            dtype=tf.float64,
         )
         self.sigma_var = tf.Variable([0.5 for i in range(self.K)], dtype=tf.float64)
         self.omega_var = tf.Variable(
@@ -269,11 +310,7 @@ class ARHMM_window(Hidden_Markov_Model):
                             ),
                             tf.gather(
                                 y_past,
-                                [
-                                    *[
-                                        i for i in range(self.past_dependency0)
-                                    ],
-                                ],
+                                [*[i for i in range(self.past_dependency0)],],
                                 axis=1,
                             ),
                         ],
@@ -308,7 +345,7 @@ class ARHMM_window(Hidden_Markov_Model):
         """
         return tf.math.exp(self.sigma_var)
 
-    def tp(self, t: tf.Tensor, w: tf.Tensor, y_past: tf.Tensor) -> tf.Tensor:
+    def tp(self, t: tf.Tensor, w: tf.Tensor) -> tf.Tensor:
         """
         Compute the transition matrix
         
@@ -319,9 +356,6 @@ class ARHMM_window(Hidden_Markov_Model):
         
         - *w*: tf.Tensor(nb_time_step, past_dependency) containing the values of the external signal in Hidden Markov Models with 
             external variable.
-            
-        - *y_past*: tf.Tensor(nb_time_step, past_dependency) containing the past values of the main signal Y_{t-m} in AutoRegressive 
-            Hidden Markov Models.
          
         Returns:
         
@@ -330,11 +364,7 @@ class ARHMM_window(Hidden_Markov_Model):
         t = tf.expand_dims(t, axis=1)
         y = tf.expand_dims(
             tf.concat(
-                [
-                    tf.expand_dims(
-                        tf.ones(w.shape[0], dtype=tf.float64), axis=1
-                    ),
-                ],
+                [tf.expand_dims(tf.ones(w.shape[0], dtype=tf.float64), axis=1),],
                 axis=1,
             ),
             axis=1,

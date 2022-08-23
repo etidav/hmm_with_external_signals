@@ -8,18 +8,42 @@ class ARSHMMES(Hidden_Markov_Model):
     Class defining a autoregressive seasonal HMM with external signals.
     """
 
+    def __init__(
+        self, nb_hidden_states: int = 2, past_dependency: int = 1, season: int = 1
+    ) -> None:
+        """
+        Instantiate a ARHMM model with gaussian emission laws and discrete hidden states.
+        
+        Arguments:
+    
+        - *nb_hidden_states*: number of hidden states of the HMM.
+        
+        - *past_dependency*: In case of a ARHMM, define the past dependency length.
+        
+        - *season*: In case of a SHMM, define the seasonality length.
+        """
+        super().__init__(nb_hidden_states, past_dependency, season)
+        self.auto_regressive = True
+
     def define_param(self) -> None:
         """
         Define parameters of the HMM model 
         """
         self.pi_var = tf.Variable([0.5 for i in range(self.K - 1)], dtype=tf.float64)
         self.delta_var = tf.Variable(
-            [[0.5 for i in range(3+2*self.past_dependency+1)] for j in range(self.K)], dtype=tf.float64
+            [
+                [0.5 for i in range(3 + 2 * self.past_dependency + 1)]
+                for j in range(self.K)
+            ],
+            dtype=tf.float64,
         )
         self.sigma_var = tf.Variable([0.5 for i in range(self.K)], dtype=tf.float64)
         self.omega_var = tf.Variable(
             [
-                [[0.5 for i in range(3+self.past_dependency+1)] for j in range(self.K - 1)]
+                [
+                    [0.5 for i in range(3 + self.past_dependency + 1)]
+                    for j in range(self.K - 1)
+                ]
                 for k in range(self.K)
             ],
             dtype=tf.float64,
@@ -114,7 +138,7 @@ class ARSHMMES(Hidden_Markov_Model):
         """
         return tf.math.exp(self.sigma_var)
 
-    def tp(self, t: tf.Tensor, w: tf.Tensor, y_past: tf.Tensor) -> tf.Tensor:
+    def tp(self, t: tf.Tensor, w: tf.Tensor) -> tf.Tensor:
         """
         Compute the transition matrix
         
@@ -125,9 +149,6 @@ class ARSHMMES(Hidden_Markov_Model):
         
         - *w*: tf.Tensor(nb_time_step, past_dependency) containing the values of the external signal in Hidden Markov Models with 
             external variable.
-            
-        - *y_past*: tf.Tensor(nb_time_step, past_dependency) containing the past values of the main signal Y_{t-m} in AutoRegressive 
-            Hidden Markov Models.
          
         Returns:
         
@@ -137,9 +158,7 @@ class ARSHMMES(Hidden_Markov_Model):
         y = tf.expand_dims(
             tf.concat(
                 [
-                    tf.expand_dims(
-                        tf.ones(w.shape[0], dtype=tf.float64), axis=1
-                    ),
+                    tf.expand_dims(tf.ones(w.shape[0], dtype=tf.float64), axis=1),
                     w,
                     tf.math.cos((2 * np.pi * t) / self.season),
                     tf.math.sin((2 * np.pi * t) / self.season),
@@ -167,8 +186,8 @@ class ARSHMMES(Hidden_Markov_Model):
             ],
             axis=2,
         )
-    
-    
+
+
 class ARSHMMES_window(Hidden_Markov_Model):
     """
     Class defining a autoregressive seasonal HMM with external signals.
@@ -177,12 +196,12 @@ class ARSHMMES_window(Hidden_Markov_Model):
     def __init__(
         self,
         nb_hidden_states: int = 2,
-        past_dependency: int = 52,
+        past_dependency: int = 1,
         past_dependency0: int = 1,
         season: int = 1,
     ) -> None:
         """
-        Instantiate a HMM model with gaussian emission laws and discrete hidden states.
+        Instantiate a ARHMM model with gaussian emission laws and discrete hidden states.
         
         Arguments:
     
@@ -190,15 +209,13 @@ class ARSHMMES_window(Hidden_Markov_Model):
         
         - *past_dependency*: In case of a ARHMM, define the past dependency length.
         
+        - *past_dependency0*: In case of a ARHMM with window, define le length of window of past dependency.
+        
         - *season*: In case of a SHMM, define the seasonality length.
         """
-        super(Hidden_Markov_Model, self).__init__()
-        self.K = nb_hidden_states
-        self.past_dependency = past_dependency
         self.past_dependency0 = past_dependency0
-        self.season = season
-        self.define_param()
-        self.init_param()
+        super().__init__(nb_hidden_states, past_dependency, season)
+        self.auto_regressive = True
 
     def define_param(self) -> None:
         """
@@ -206,12 +223,19 @@ class ARSHMMES_window(Hidden_Markov_Model):
         """
         self.pi_var = tf.Variable([0.5 for i in range(self.K - 1)], dtype=tf.float64)
         self.delta_var = tf.Variable(
-            [[0.5 for i in range(3+2*self.past_dependency0)] for j in range(self.K)], dtype=tf.float64
+            [
+                [0.5 for i in range(3 + 2 * self.past_dependency0)]
+                for j in range(self.K)
+            ],
+            dtype=tf.float64,
         )
         self.sigma_var = tf.Variable([0.5 for i in range(self.K)], dtype=tf.float64)
         self.omega_var = tf.Variable(
             [
-                [[0.5 for i in range(3+self.past_dependency0)] for j in range(self.K - 1)]
+                [
+                    [0.5 for i in range(3 + self.past_dependency0)]
+                    for j in range(self.K - 1)
+                ]
                 for k in range(self.K)
             ],
             dtype=tf.float64,
@@ -272,20 +296,12 @@ class ARSHMMES_window(Hidden_Markov_Model):
                             ),
                             tf.gather(
                                 w,
-                                [
-                                    *[
-                                        i for i in range(self.past_dependency0)
-                                    ],
-                                ],
+                                [*[i for i in range(self.past_dependency0)],],
                                 axis=1,
                             ),
                             tf.gather(
                                 y_past,
-                                [
-                                    *[
-                                        i for i in range(self.past_dependency0)
-                                    ],
-                                ],
+                                [*[i for i in range(self.past_dependency0)],],
                                 axis=1,
                             ),
                             tf.math.cos((2 * np.pi * t) / self.season),
@@ -322,7 +338,7 @@ class ARSHMMES_window(Hidden_Markov_Model):
         """
         return tf.math.exp(self.sigma_var)
 
-    def tp(self, t: tf.Tensor, w: tf.Tensor, y_past: tf.Tensor) -> tf.Tensor:
+    def tp(self, t: tf.Tensor, w: tf.Tensor) -> tf.Tensor:
         """
         Compute the transition matrix
         
@@ -333,9 +349,6 @@ class ARSHMMES_window(Hidden_Markov_Model):
         
         - *w*: tf.Tensor(nb_time_step, past_dependency) containing the values of the external signal in Hidden Markov Models with 
             external variable.
-            
-        - *y_past*: tf.Tensor(nb_time_step, past_dependency) containing the past values of the main signal Y_{t-m} in AutoRegressive 
-            Hidden Markov Models.
          
         Returns:
         
@@ -345,17 +358,9 @@ class ARSHMMES_window(Hidden_Markov_Model):
         y = tf.expand_dims(
             tf.concat(
                 [
-                    tf.expand_dims(
-                        tf.ones(w.shape[0], dtype=tf.float64), axis=1
-                    ),
+                    tf.expand_dims(tf.ones(w.shape[0], dtype=tf.float64), axis=1),
                     tf.gather(
-                        w,
-                        [
-                            *[
-                                i for i in range(self.past_dependency0)
-                            ],
-                        ],
-                        axis=1,
+                        w, [*[i for i in range(self.past_dependency0)],], axis=1,
                     ),
                     tf.math.cos((2 * np.pi * t) / self.season),
                     tf.math.sin((2 * np.pi * t) / self.season),

@@ -113,7 +113,7 @@ class SHMM(Hidden_Markov_Model):
         """
         return tf.math.exp(self.sigma_var)
 
-    def tp(self, t: tf.Tensor, w: tf.Tensor, y_past: tf.Tensor) -> tf.Tensor:
+    def tp(self, t: tf.Tensor, w: tf.Tensor) -> tf.Tensor:
         """
         Compute the transition matrix
         
@@ -124,9 +124,6 @@ class SHMM(Hidden_Markov_Model):
         
         - *w*: tf.Tensor(nb_time_step, past_dependency) containing the values of the external signal in Hidden Markov Models with 
             external variable.
-            
-        - *y_past*: tf.Tensor(nb_time_step, past_dependency) containing the past values of the main signal Y_{t-m} in AutoRegressive 
-            Hidden Markov Models.
          
         Returns:
         

@@ -20,7 +20,10 @@ class HMMES(Hidden_Markov_Model):
         self.sigma_var = tf.Variable([0.5 for i in range(self.K)], dtype=tf.float64)
         self.omega_var = tf.Variable(
             [
-                [[0.5 for i in range(1 + self.past_dependency)] for j in range(self.K - 1)]
+                [
+                    [0.5 for i in range(1 + self.past_dependency)]
+                    for j in range(self.K - 1)
+                ]
                 for k in range(self.K)
             ],
             dtype=tf.float64,
@@ -112,7 +115,7 @@ class HMMES(Hidden_Markov_Model):
         """
         return tf.math.exp(self.sigma_var)
 
-    def tp(self, t: tf.Tensor, w: tf.Tensor, y_past: tf.Tensor) -> tf.Tensor:
+    def tp(self, t: tf.Tensor, w: tf.Tensor) -> tf.Tensor:
         """
         Compute the transition matrix
         
@@ -123,9 +126,6 @@ class HMMES(Hidden_Markov_Model):
         
         - *w*: tf.Tensor(nb_time_step, past_dependency) containing the values of the external signal in Hidden Markov Models with 
             external variable.
-            
-        - *y_past*: tf.Tensor(nb_time_step, past_dependency) containing the past values of the main signal Y_{t-m} in AutoRegressive 
-            Hidden Markov Models.
          
         Returns:
         
@@ -203,7 +203,10 @@ class HMMES_window(Hidden_Markov_Model):
         self.sigma_var = tf.Variable([0.5 for i in range(self.K)], dtype=tf.float64)
         self.omega_var = tf.Variable(
             [
-                [[0.5 for i in range(1 + self.past_dependency0)] for j in range(self.K - 1)]
+                [
+                    [0.5 for i in range(1 + self.past_dependency0)]
+                    for j in range(self.K - 1)
+                ]
                 for k in range(self.K)
             ],
             dtype=tf.float64,
@@ -299,7 +302,7 @@ class HMMES_window(Hidden_Markov_Model):
         """
         return tf.math.exp(self.sigma_var)
 
-    def tp(self, t: tf.Tensor, w: tf.Tensor, y_past: tf.Tensor) -> tf.Tensor:
+    def tp(self, t: tf.Tensor, w: tf.Tensor) -> tf.Tensor:
         """
         Compute the transition matrix
         
@@ -310,9 +313,6 @@ class HMMES_window(Hidden_Markov_Model):
         
         - *w*: tf.Tensor(nb_time_step, past_dependency) containing the values of the external signal in Hidden Markov Models with 
             external variable.
-            
-        - *y_past*: tf.Tensor(nb_time_step, past_dependency) containing the past values of the main signal Y_{t-m} in AutoRegressive 
-            Hidden Markov Models.
          
         Returns:
         

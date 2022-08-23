@@ -66,7 +66,7 @@ class HMM(Hidden_Markov_Model):
         
         - *mu*: a tf.Tensor(nb_hidden_states,nb_time_step) containing the mean of the emission densities.
         """
-        return self.delta_var
+        return self.delta_var * tf.ones_like(t)
 
     def sigma(
         self, t: tf.Tensor = None, w: tf.Tensor = None, y_past: tf.Tensor = None
@@ -89,9 +89,12 @@ class HMM(Hidden_Markov_Model):
         
         - *sigma*: a tf.Tensor(nb_hidden_states,) containing the standard deviation of the emission densities
         """
-        return tf.math.exp(self.sigma_var)
+        if t is None:
+            return tf.math.exp(self.sigma_var)
+        else:
+            return tf.expand_dims(tf.math.exp(self.sigma_var), axis=1) * tf.ones_like(t)
 
-    def tp(self, t: tf.Tensor, w: tf.Tensor, y_past: tf.Tensor) -> tf.Tensor:
+    def tp(self, t: tf.Tensor, w: tf.Tensor) -> tf.Tensor:
         """
         Compute the transition matrix
         
@@ -102,9 +105,6 @@ class HMM(Hidden_Markov_Model):
         
         - *w*: tf.Tensor(nb_time_step, past_dependency) containing the values of the external signal in Hidden Markov Models with 
             external variable.
-            
-        - *y_past*: tf.Tensor(nb_time_step, past_dependency) containing the past values of the main signal Y_{t-m} in AutoRegressive 
-            Hidden Markov Models.
          
         Returns:
         

@@ -29,10 +29,12 @@ def fit_predict_single_ts(ts: pd.Series, model_name: str) -> Dict[str, np.array]
     """
     ts_name = ts.name
     if model_name == "ets":
-        model = ExponentialSmoothing(ts.values, seasonal_periods=WEEKS_IN_A_YEAR, seasonal="add")
+        model = ExponentialSmoothing(
+            ts.values, seasonal_periods=WEEKS_IN_A_YEAR, seasonal="add"
+        )
         fitted_model = model.fit()
     elif model_name == "thetam":
-        model = ThetaModel(ts.values, period=WEEKS_IN_A_YEAR, method='add')
+        model = ThetaModel(ts.values, period=WEEKS_IN_A_YEAR, method="add")
         fitted_model = model.fit()
     elif model_name == "tbats":
         model = TBATS(seasonal_periods=[WEEKS_IN_A_YEAR], n_jobs=1)
@@ -61,7 +63,7 @@ def fit_predict(data: pd.DataFrame, model_name: str) -> Dict[str, np.array]:
 
     model_prediction = {}
     for ts_name in data:
-        single_pred = fit_predict_single_ts(data[ts_name],model_name)
+        single_pred = fit_predict_single_ts(data[ts_name], model_name)
         model_prediction[ts_name] = single_pred
 
     return model_prediction
@@ -90,9 +92,7 @@ def compute_snaive_prediction(data: pd.DataFrame) -> Dict[str, np.array]:
 
 
 def predict(
-    data: pd.DataFrame,
-    model_name: str,
-    time_split: str = None,
+    data: pd.DataFrame, model_name: str, time_split: str = None,
 ) -> pd.DataFrame:
     """
     This method is the main method to compute the forecast for each time series present in a pd.DataFrame.
@@ -118,7 +118,7 @@ def predict(
     if time_split is not None:
         data = data.loc[:time_split]
 
-    if model_name in ["ets","thetam","tbats"]:
+    if model_name in ["ets", "thetam", "tbats"]:
         prediction = fit_predict(data, model_name)
     elif model_name == "snaive":
         prediction = compute_snaive_prediction(data)
@@ -135,9 +135,10 @@ def predict(
 
     return final_prediction
 
+
 def compute_mase(
     y_true: np.array, y_pred: np.array, y_histo: np.array, freq: int = WEEKS_IN_A_YEAR
-) -> Tuple[list,int]:
+) -> Tuple[list, int]:
     """
     This method is the method to compute the seasonal Mean Absolute Scaled Errror (MASE).
     
@@ -162,9 +163,8 @@ def compute_mase(
     final_mase = all_mase.mean()
     return all_mase, final_mase
 
-def compute_mse(
-    y_true: np.array, y_pred: np.array
-) -> Tuple[list,int]:
+
+def compute_mse(y_true: np.array, y_pred: np.array) -> Tuple[list, int]:
     """
     This method is the method to compute the seasonal Mean Absolute Scaled Errror (MASE).
     
@@ -179,13 +179,12 @@ def compute_mse(
     - *final_mse*: a float representing the final mase. 
         The average mse is computed on all the seqences.
     """
-    all_mse = np.mean(np.square(y_true - y_pred),axis=0)
+    all_mse = np.mean(np.square(y_true - y_pred), axis=0)
     final_mse = all_mse.mean()
     return all_mse, final_mse
 
-def compute_mae(
-    y_true: np.array, y_pred: np.array
-) -> Tuple[list,int]:
+
+def compute_mae(y_true: np.array, y_pred: np.array) -> Tuple[list, int]:
     """
     This method is the method to compute the seasonal Mean Absolute Scaled Errror (MASE).
     
@@ -200,9 +199,10 @@ def compute_mae(
     - *final_mae*: a float representing the final mase. 
         The average mae is computed on all the seqences.
     """
-    all_mse = np.mean(np.abs(y_true - y_pred),axis=0)
+    all_mse = np.mean(np.abs(y_true - y_pred), axis=0)
     final_mse = all_mse.mean()
     return all_mse, final_mse
+
 
 def eval_model(
     data: pd.DataFrame,
@@ -243,17 +243,15 @@ def eval_model(
     all_mase, final_mase = compute_mase(
         ground_truth.values, prediction.values, histo_ground_truth.values, freq=freq
     )
-    all_mae, final_mae = compute_mae(
-        ground_truth.values, prediction.values
-    )
-    all_mse, final_mse = compute_mse(
-        ground_truth.values, prediction.values
-    )
-    model_result_mase = pd.DataFrame(all_mase, index = data.columns, columns = [model_name]).T
-    model_result_mase['total'] = final_mase
-    model_result_mae = pd.DataFrame(all_mae, index = data.columns, columns = [model_name]).T
-    model_result_mae['total'] = final_mae
-    model_result_mse = pd.DataFrame(all_mse, index = data.columns, columns = [model_name]).T
-    model_result_mse['total'] = final_mse
+    all_mae, final_mae = compute_mae(ground_truth.values, prediction.values)
+    all_mse, final_mse = compute_mse(ground_truth.values, prediction.values)
+    model_result_mase = pd.DataFrame(
+        all_mase, index=data.columns, columns=[model_name]
+    ).T
+    model_result_mase["total"] = final_mase
+    model_result_mae = pd.DataFrame(all_mae, index=data.columns, columns=[model_name]).T
+    model_result_mae["total"] = final_mae
+    model_result_mse = pd.DataFrame(all_mse, index=data.columns, columns=[model_name]).T
+    model_result_mse["total"] = final_mse
 
     return model_result_mase, model_result_mae, model_result_mse

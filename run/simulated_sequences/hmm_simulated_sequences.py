@@ -253,7 +253,7 @@ if __name__ == "__main__":
     y_test = result[1][train_length:]
 
     external_signal = pd.read_csv(
-        "/hmm_with_external_signals/data/f1_main_10_sequences.csv", index_col=0
+        "/hmm_with_external_signals/data/f1_fashion_forward_10_sequences.csv", index_col=0
     )["eu_female_top_325"]
     external_signal = external_signal.rolling(8, min_periods=0).mean()
     external_signal = external_signal.values.flatten()
@@ -264,8 +264,8 @@ if __name__ == "__main__":
             for i in range(int((train_length + test_length) / len(external_signal)) + 1)
         ]
     )
-    w_train = external_signal[:train_length]
-    w_test = external_signal[train_length : train_length + test_length]
+    w_train = external_signal[-train_length-test_length:-test_length]
+    w_test = external_signal[-test_length:]
 
     write_pickle(y_train, os.path.join(model_folder, "data_y_train.pkl"))
     write_pickle(y_test, os.path.join(model_folder, "data_y_test.pkl"))

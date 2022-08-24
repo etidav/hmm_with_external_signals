@@ -148,25 +148,27 @@ def train_model(
             model_folder, model_name.lower(), "execution" + str(i), ""
         )
         os.makedirs(current_execution_model_folder)
-
-        model, init_param = init_model_param(
-            model_name,
-            original_model,
-            init_with_true_parameter,
-            percentage_of_variation,
-        )
-        all_param, run_mse, best_exec = model.fit(
-            y=tf.constant(y_train),
-            w=tf.constant(w_train[1:]),
-            eval_size=test_length,
-            nb_em_epoch=nb_em_epoch,
-            nb_iteration_per_epoch=nb_iteration_per_epoch,
-            nb_execution=1,
-            optimizer_name="Adam",
-            learning_rate=learning_rate,
-            init_param=init_param,
-            return_param_evolution=True,
-        )
+        for i in range(10):
+            model, init_param = init_model_param(
+                model_name,
+                original_model,
+                init_with_true_parameter,
+                percentage_of_variation,
+            )
+            all_param, run_mse, best_exec = model.fit(
+                y=tf.constant(y_train),
+                w=tf.constant(w_train[1:]),
+                eval_size=test_length,
+                nb_em_epoch=nb_em_epoch,
+                nb_iteration_per_epoch=nb_iteration_per_epoch,
+                nb_execution=1,
+                optimizer_name="Adam",
+                learning_rate=learning_rate,
+                init_param=init_param,
+                return_param_evolution=True,
+            )
+            if run_mse != np.inf:
+                break
 
         model.save_weights(current_execution_model_folder)
         write_pickle(

@@ -30,15 +30,15 @@ from model.ARSHMM import ARSHMM_window
 from model.ARSHMMES import ARSHMMES_window
 from model.ARHMMES import ARHMMES_window
 
-def run_model(model_folder, model, y_train, y_test, w_train, w_test, nb_em_epoch, nb_execution, nb_simulation, learning_rate, norm):
-    
+def run_model(model_folder, model, y_train, y_test, w_train, w_test, nb_em_epoch, nb_iteration_per_epoch, nb_execution, nb_simulation, learning_rate, norm):
     
     for i in range(10):
         all_param, run_mse, best_exec = model.fit(
             y = tf.constant(y_train),
-            w = tf.constant(w_train),
+            w = tf.constant(w_train[:-1]),
             eval_size = 52,
             nb_em_epoch =nb_em_epoch,
+            nb_iteration_per_epoch=nb_iteration_per_epoch,
             nb_execution =nb_execution,
             optimizer_name = 'Adam',
             learning_rate=learning_rate,
@@ -49,17 +49,19 @@ def run_model(model_folder, model, y_train, y_test, w_train, w_test, nb_em_epoch
 
         all_param, run_mse, best_exec = model.fit(
             y = tf.constant(y_train),
-            w = tf.constant(w_train),
+            w = tf.constant(w_train[:-1]),
             eval_size = 52,
-            nb_em_epoch =100,
+            nb_em_epoch =500,
+            nb_iteration_per_epoch = nb_iteration_per_epoch,
             nb_execution =1,
             optimizer_name = 'Adam',
             learning_rate=learning_rate,
             init_param=0,
             return_param_evolution=True
         )
-        if run_mse < np.inf:
+        if run_mse != np.inf:
             break
+        
     write_pickle(model.get_param(), os.path.join(model_folder, "final_param.pkl"))
     write_pickle(all_param, os.path.join(model_folder, "param_evolution.pkl"))
     write_pickle(run_mse, os.path.join(model_folder, "run_mse.pkl"))
@@ -74,6 +76,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--trend_name", type=str, help="", default="eu_female_top_325")
     parser.add_argument("--nb_em_epoch", type=int, help="", default=50)
+    parser.add_argument("--nb_iteration_per_epoch", type=int, help="", default=50)
     parser.add_argument("--nb_em_execution", type=int, help="", default=1)
     parser.add_argument("--nb_repetition", type=int, help="", default=1)
     parser.add_argument("--nb_simulation", type=int, help="", default=1)
@@ -86,6 +89,7 @@ if __name__ == "__main__":
     
     main_folder = args.main_folder
     nb_em_epoch = args.nb_em_epoch
+    nb_iteration_per_epoch = args.nb_iteration_per_epoch
     nb_em_execution = args.nb_em_execution
     nb_repetition = args.nb_repetition
     nb_simulation = args.nb_simulation
@@ -130,4 +134,4 @@ if __name__ == "__main__":
             for i in range(nb_repetition):
                 exec_folder = os.path.join(model_folder,f'exec{i}')
                 os.makedirs(exec_folder)
-                run_model(exec_folder, model, y_train, y_test, w_train, w_test, nb_em_epoch, nb_em_execution, nb_simulation, learning_rate, y_data[:52].mean())
+                run_model(exec_folder, model, y_train, y_test, w_train, w_test, nb_em_epoch, nb_iteration_per_epoch, nb_em_execution, nb_simulation, learning_rate, y_data[:52].mean())

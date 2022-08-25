@@ -613,7 +613,7 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         
         - *mse*: the mse loss
         """
-        w_test = np.repeat(w[-eval_size].numpy()[-1], eval_size - self.past_dependency)
+        w_test = np.repeat(w[-eval_size].numpy()[-1], eval_size - 1) 
         w_test = np.concatenate([w[-eval_size].numpy(), w_test], axis=0)
         alpha = self.forward_probs(y[:-eval_size], w[:-eval_size], y_past[:-eval_size])
         beta = self.backward_probs(y[:-eval_size], w[:-eval_size], y_past[:-eval_size])
@@ -777,7 +777,7 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
         if y_init is None:
             y_init = tf.zeros(self.past_dependency)
         y_past.append(y_init)
-
+        
         transition_probs = self.tp(
             tf.range(start_t, horizon + start_t, dtype=tf.float64), w
         )
@@ -1003,7 +1003,7 @@ class Hidden_Markov_Model(ABC, tf.keras.Model):
 
         if w is not None:
             w_test = np.concatenate(
-                [w[-self.past_dependency :], w_test[: -self.past_dependency]], axis=0
+                [w[-self.past_dependency :], w_test[: -1]], axis=0
             )
             w = tf.stack(
                 [

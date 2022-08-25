@@ -209,32 +209,6 @@ class ARSHMM_window(Hidden_Markov_Model):
         super().__init__(nb_hidden_states, past_dependency, season)
         self.auto_regressive = True
 
-    def __init__(
-        self,
-        nb_hidden_states: int = 2,
-        past_dependency: int = 52,
-        past_dependency0: int = 1,
-        season: int = 1,
-    ) -> None:
-        """
-        Instantiate a HMM model with gaussian emission laws and discrete hidden states.
-        
-        Arguments:
-    
-        - *nb_hidden_states*: number of hidden states of the HMM.
-        
-        - *past_dependency*: In case of a ARHMM, define the past dependency length.
-        
-        - *season*: In case of a SHMM, define the seasonality length.
-        """
-        super(Hidden_Markov_Model, self).__init__()
-        self.K = nb_hidden_states
-        self.past_dependency = past_dependency
-        self.past_dependency0 = past_dependency0
-        self.season = season
-        self.define_param()
-        self.init_param()
-
     def define_param(self) -> None:
         """
         Define parameters of the HMM model 

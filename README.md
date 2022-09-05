@@ -30,7 +30,7 @@ python run/simulated_sequences/shmmes_simulated_sequence.py --help # display the
 python run/simulated_sequences/shmmes_simulated_sequence.py --model_folder result/shmmes_simulated_sequence # run a hmm, shmm, hmmes and shmmes model on a simulated sequence using a shmmes model and save the results in the dir result/shmmes_simulated_sequence
 python3 run/simulated_sequences/shmmes_simulated_sequences.py --model_folder result/shmmes_simulated_sequence --train_length 10000 --test_length 250 --nb_em_epoch 1000 --nb_repetition 10 --init_with_true_parameter 1 --percentage_of_variation 0.5 --learning_rate 0.5 --nb_test_simulation 1000 --model_name_list all --nb_iteration_per_epoch 1 # commande to recover the exact result of the Table 1 of the HMM with external signals paper.
 python3 run/simulated_sequences/shmmes_simulated_sequences.py --model_folder result/shmmes_simulated_sequence --train_length 1000 --test_length 250 --nb_em_epoch 1000 --nb_repetition 10 --init_with_true_parameter 1 --percentage_of_variation 0.5 --learning_rate 0.5 --nb_test_simulation 1000 --model_name_list shmmes --nb_iteration_per_epoch 1 # commande to reproduce the result of the Table 4 of the HMM with external signals paper. (set --train_length 10000 and --train_length 100000 to recovered the result of column 2 and 3)
-python3 run/simulated_sequences/shmmes_simulated_sequences.py --model_folder result/shmmes_simulated_sequence --train_length 10000 --test_length 250 --nb_em_epoch 1000 --nb_repetition 10 --init_with_true_parameter 1 --percentage_of_variation 0.5 --learning_rate 0.5 --nb_test_simulation 1000 --model_name_list shmmes --nb_iteration_per_epoch 1 # commande to reproduce the result of the Table 5 of the HMM with external signals paper. (set --percentage_of_variation 1 and --percentage_of_variation 2 to recovered the result of column 2 and 3) 
+python3 run/simulated_sequences/shmmes_simulated_sequences.py --model_folder result/shmmes_simulated_sequence --train_length 10000 --test_length 250 --nb_em_epoch 1000 --nb_repetition 10 --init_with_true_parameter 1 --percentage_of_variation 0.5 --learning_rate 0.5 --nb_test_simulation 1000 --model_name_list shmmes --nb_iteration_per_epoch 1 # commande to reproduce the result of the Table 5 of the HMM with external signals paper. (set --percentage_of_variation 2 and --percentage_o_variation 5 to recovered the result of column 2 and 3) 
 ```
 To reproduce the result on HMM simulated sequences :
 - [hmm_simulated_sequences.py](run/simulated_sequences/hmm_simulated_sequences.py)
@@ -65,28 +65,24 @@ The following tabs summarize some results that can be reproduced with this code:
 
 | Model         | Mase        | Mae         | Mse         |
 | :-------------| :-----------| :-----------| :-----------|
-| hmm           | 1.354       | 4.833       | 31.124      |
-| shmm          | 0.903       | 3.222       | 15.582      |
-| hmm-es        | 1.245       | 4.446       | 26.246      |
-| shmm-es       | 0.737       | 2.630       | 14.102      |
+| hmm           |             |             |             |
+| shmm          |             |             |             |
+| hmmes         |             |             |             |
+| shmmes        |             |             |             |
 
  - on the eu_female_top_325 fashion sequences:
 
 | Model         | Mase        | Mae         | Mse         |
 | :-------------| :-----------| :-----------| :-----------|
-| thetam        | 1.73        | 0.87        | 1.04        |
-| ets           | 1.59        | 0.80        | 0.89        |
-| tbats         | 1.25        | 0.63        | 0.68        |
-| snaive        | 1.09        | 0.55        | 0.51        |
-| lstm-ws       | 0.97        | 0.49        | 0.50        |
-| lstm          | 0.78        | 0.39        | 0.28        |
-| hermes        | 0.70        | 0.25        | 0.23        |
-| hermes-ws     | 0.67        | 0.34        | 0.22        |
+| thetam        |             |             |             |
+| ets           |             |             |             |
+| tbats         |             |             |             |
+| snaive        |             |             |             |
 | hmm           |             |             |             |
 | shmm          |             |             |             |
-| hmm-es        |             |             |             |
-| ar-hmm        |             |             |             |
-| ar-hmm-es     |             |             |             |
-| ar-shmm-es    |             |             |             |
-| shmm-es       |             |             |             |
-| ar-shmm-es    |             |             |             |
+| hmmes         |             |             |             |
+| arhmm         |             |             |             |
+| arhmmes       |             |             |             |
+| arshmmes      |             |             |             |
+| shmmes        |             |             |             |
+| arshmmes      |             |             |             |

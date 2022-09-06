@@ -82,11 +82,11 @@ The following tabs summarize some results that can be reproduced with this code:
 | lstm          | 0.78        | 0.39        | 0.28        |
 | hermes        | 0.70        | 0.35        | 0.23        |
 | hermes-ws     | 0.67        | 0.34        | 0.22        |
-| hmm           |             |             |             |
-| shmm          |             |             |             |
-| hmm-es        |             |             |             |
-| ar-hmm        |             |             |             |
-| ar-hmm-es     |             |             |             |
-| ar-shmm-es    |             |             |             |
-| shmm-es       |             |             |             |
-| ar-shmm-es    |             |             |             |
+| hmm           | 1.99        | 1.01        | 1.78        |
+| shmm          | 1.95        | 0.99        | 1.61        |
+| hmm-es        | 0.98        | 0.60        | 0.52        |
+| ar-hmm        | 0.95        | 0.58        | 0.62        |
+| ar-hmm-es     | 0.80        | 0.49        | 0.40        |
+| ar-shmm       | 0.77        | 0.47        | 0.43        |
+| shmm-es       | 0.62        | 0.38        | 0.24        |
+| ar-shmm-es    | 0.56        | 0.35        | 0.24        |

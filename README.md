@@ -1,18 +1,19 @@
 # Discrete hidden Markov model with inclusion of external signals
 
-Authors: Etienne DAVID, Sylvain LE CORFF and Jean BELLOT
+Authors: Étienne David, Jean Bellot, Sylvain Le Corff and Luc Lehéricy
 
 Paper link: 
 
 ### Abstract
-> In this paper, we consider a bivariate process (Xt,Yt) whose transition and emission kernels depend on an additional process Wt. The resulting model (Xt,Yt,Wt) is referred to as a hidden Markov model with external signals and we prove that under several assumptions, it is identifiable and its maximum likelihood estimator is  consistent. Using the Expectation Maximization algorithm, we train and evaluate the performance of this new approach on several sequences. In addition to learning dependencies between the main signal and the external signal, hidden Markov model using external signals also outperforms state-of-the-art models on real-world sequences while showing theoretical guarantees and interpretability.
+> In this paper, we consider a bivariate process Xt,Yt which, conditionally on a signal Wt, is a hidden Markov model whose transition and emission kernels depend on Wt. The resulting process (Xt,Yt,Wt) is referred to as an input-output hidden Markov model or hidden Markov model with external signals. We prove that this model is identifiable and that the associated maximum likelihood estimator is consistent. Introducing an Expectation Maximization-based algorithm, we train and evaluate the performance of this model in several frameworks. In addition to learning dependencies between (Xt,Yt) and Wt, our approach based on hidden Markov models with external signals also outperforms state-of-the-art algorithms on real-world fashion sequences.
+
 ## Code Organisation
 
-This repository provides the code of the hidden Markov model with the inclusion of external signals and a simple code base to reproduce the results presented in this [paper](). The repository is organized as follow:
+This repository provides the code of the hidden Markov model with the inclusion of external signals and a simple code base to reproduce results presented in this [paper](). The repository is organized as follow:
 
- - [model/](model/): Directory gathering the code of the benchmarks and all the HMMs variation (hmm, shmm, arhmm, arshmm, hmmes, shmmes, arhmmes, arshmmes)
- - [run/](run/): Directory gathering the different scipt tro reproduced the result of the paper.
- - [data/](data/): Directory gathering the 10 fashion time series introduced in this paper [paper](https://arxiv.org/pdf/2202.03224.pdf) and used in the experimental section of the HMM with external signals paper.
+ - [model/](model/): Directory gathering the code of the benchmarks and all the HMMs variations (hmm, shmm, ar-hmm, ar-shmm, hmm-es, shmm-es, ar-hmm-es, ar-shmm-es)
+ - [run/](run/): Directory gathering the different scripts to reproduce the result of the paper.
+ - [data/](data/): Directory gathering the 10 fashion time series introduced in the HERMES [paper](https://arxiv.org/pdf/2202.03224.pdf) and used in Section 4.
  - [docker/](docker/): directory gathering the code to reproduce a docker so as to recover the exact result of the paper.  
 
 ## Reproduce benchmark results
@@ -22,12 +23,12 @@ First, you should build, run and enter into the docker. In the main folder, run
 make build run enter
 ```
 
-To reproduce the result on SHMMES simulated sequences :
+To reproduce the result on the synthetic sequence simulated with a shmm-es:
 - [shmmes_simulated_sequences.py](run/simulated_sequences/shmmes_simulated_sequences.py)
 run
 ```bash
 python run/simulated_sequences/shmmes_simulated_sequence.py --help # display the default parameters and their description
-python run/simulated_sequences/shmmes_simulated_sequence.py --model_folder result/shmmes_simulated_sequence # run a hmm, shmm, hmmes and shmmes model on a simulated sequence using a shmmes model and save the results in the dir result/shmmes_simulated_sequence
+python run/simulated_sequences/shmmes_simulated_sequence.py --model_folder result/shmmes_simulated_sequence # run a hmm, shmm, hmm-es and shmm-es model on a synthetic sequence simulated with a shmm-es model and save the results in the dir result/shmmes_simulated_sequence
 python3 run/simulated_sequences/shmmes_simulated_sequences.py --model_folder result/shmmes_simulated_sequence --train_length 10000 --test_length 250 --nb_em_epoch 1000 --nb_repetition 10 --init_with_true_parameter 1 --percentage_of_variation 0.5 --learning_rate 0.5 --nb_test_simulation 1000 --model_name_list all --nb_iteration_per_epoch 1 # commande to recover the exact result of the Table 1 of the HMM with external signals paper.
 python3 run/simulated_sequences/shmmes_simulated_sequences.py --model_folder result/shmmes_simulated_sequence --train_length 1000 --test_length 250 --nb_em_epoch 1000 --nb_repetition 10 --init_with_true_parameter 1 --percentage_of_variation 0.5 --learning_rate 0.5 --nb_test_simulation 1000 --model_name_list shmmes --nb_iteration_per_epoch 1 # commande to reproduce the result of the Table 4 of the HMM with external signals paper. (set --train_length 10000 and --train_length 100000 to recovered the result of column 2 and 3)
 python3 run/simulated_sequences/shmmes_simulated_sequences.py --model_folder result/shmmes_simulated_sequence --train_length 10000 --test_length 250 --nb_em_epoch 1000 --nb_repetition 10 --init_with_true_parameter 1 --percentage_of_variation 0.5 --learning_rate 0.5 --nb_test_simulation 1000 --model_name_list shmmes --nb_iteration_per_epoch 1 # commande to reproduce the result of the Table 5 of the HMM with external signals paper. (set --percentage_of_variation 1 and --percentage_of_variation 2 to recovered the result of column 2 and 3) 
@@ -37,7 +38,7 @@ To reproduce the result on HMM simulated sequences :
 run
 ```bash
 python run/simulated_sequences/hmm_simulated_sequence.py --help # display the default parameters and their description
-python run/simulated_sequences/hmm_simulated_sequence.py --model_folder result/hmm_simulated_sequence # train a hmm, shmm, hmmes and shmmes model on a simulated sequence using a hmm model and save the results in the dir result/hmm_simulated_sequence
+python run/simulated_sequences/hmm_simulated_sequence.py --model_folder result/hmm_simulated_sequence # train a hmm, shmm, hmm-es and shmm-es model on a synthetic sequence simulated with a hmm model and save the results in the dir result/hmm_simulated_sequence
 python3 run/simulated_sequences/hmm_simulated_sequences.py --model_folder result/hmm_simulated_sequence --train_length 10000 --test_length 250 --nb_em_epoch 1000 --nb_repetition 1 --init_with_true_parameter 1 --percentage_of_variation 0.5 --learning_rate 0.5 --nb_test_simulation 1000 --model_name_list all --nb_iteration_per_epoch 1 # commande to recover the exact result of the Table 6 of the HMM with external signals paper.
 ```
 To reproduce the HMM-based models results on the 10 fashion sequences:
@@ -45,20 +46,20 @@ To reproduce the HMM-based models results on the 10 fashion sequences:
 run
 ```bash
 python run/fashion_sequences/hmm_fashion_sequences.py --help # display the default parameters and their description 
-python run/fashion_sequences/hmm_fashion_sequences.py --main_folder result/hmm_fashion_sequences --trend_name eu_female_top_325 --nb_em_epoch 10 --nb_iteration_per_epoch 5 --nb_em_execution 10 --nb_repetition 10 --nb_simulation 1000 --learning_rate 0.5 # train all the hmm variations on the fashion sequence eu_female_top_325 and provide the HMM result of the Table 2 of the HMM with external signals paper. 
-python run/fashion_sequences/hmm_fashion_sequences.py --main_folder result/hmm_fashion_sequences --trend_name br_female_shoes_262 --nb_em_epoch 10 --nb_iteration_per_epoch 5 --nb_em_execution 10 --nb_repetition 10 --nb_simulation 1000 --learning_rate 0.5 # train all the hmm variations on the fashion sequence br_female_shoes_262 and provide the first column of the Table 3 (ts1). Run the same command with the following --trend_name arguments to recover the full HMMs results of table 3 : br_female_texture_59, br_female_texture_82, eu_female_outerwear_177, eu_female_top_325, eu_female_top_394, eu_female_texture_80, us_female_outerwear_171, us_female_shoes_76, us_female_top_79
+python run/fashion_sequences/hmm_fashion_sequences.py --main_folder result/hmm_fashion_sequences --trend_name eu_female_top_325 --nb_em_epoch 10 --nb_iteration_per_epoch 5 --nb_em_execution 10 --nb_repetition 10 --nb_simulation 1000 --learning_rate 0.5 # train all the hmm variations on the fashion sequence eu_female_top_325 and provide the result of Table 2. 
+python run/fashion_sequences/hmm_fashion_sequences.py --main_folder result/hmm_fashion_sequences --trend_name br_female_shoes_262 --nb_em_epoch 10 --nb_iteration_per_epoch 5 --nb_em_execution 10 --nb_repetition 10 --nb_simulation 1000 --learning_rate 0.5 # train all the hmm variations on the fashion sequence br_female_shoes_262 and provide the first column of Table 3 (ts1). Run the same command with the following --trend_name arguments to recover the full results of table 3 : br_female_texture_59, br_female_texture_82, eu_female_outerwear_177, eu_female_top_325, eu_female_top_394, eu_female_texture_80, us_female_outerwear_171, us_female_shoes_76, us_female_top_79
 ```
 To reproduce the benchmarks results on the 10 fashion sequences (except hermes and lstm models):
 - [benchmark_fashion_sequences.py](run/fashion_sequences/benchmark_fashion_sequences.py)
 run
 ```bash
 python run/fashion_sequences/benchmark_fashion_sequences.py --help # display the default parameters and their description
-python run/fashion_sequences/benchmark_fashion_sequences.py --main_folder result/benchmark_fashion_sequences # train benchmark models on all the fashion sequence and provide the benchmarks results of Table 2 and Table 3 of the HMM with external signals paper.
+python run/fashion_sequences/benchmark_fashion_sequences.py --main_folder result/benchmark_fashion_sequences # train benchmark models on all the fashion sequence and provide the benchmarks results of Table 2 and Table 3.
 ```
 
 ## HMM with external signals paper results
 
-The following tabs summarize some results that can be reproduced with this code:
+The following tabs summarizes some results that can be reproduced with this code:
 
 
  - on SHMMES simulated sequences:
